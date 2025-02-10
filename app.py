@@ -1,16 +1,24 @@
 import streamlit as st
 import json
-import os
 from datetime import datetime
 import pandas as pd
 import altair as alt
+from streamlit_cookies_manager import EncryptedCookieManager
 
 # -----------------------
-# File Paths and Constants
+# Cookie Manager Initialization
 # -----------------------
-DATA_DIR = "data"
-TRACKING_FILE = os.path.join(DATA_DIR, "tracking_data.json")
-CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
+# Initialize the cookies manager.
+cookies = EncryptedCookieManager(
+    prefix="cpt_",
+    password="a-very-secret-key"  # Change this to a secure password in production.
+)
+if not cookies.ready():
+    st.stop()
+
+# Keys for storing data in cookies
+TRACKING_KEY = "tracking_data"
+CONFIG_KEY = "config"
 
 # Define Bible verses for each category
 BIBLE_VERSES = {
@@ -27,18 +35,13 @@ BIBLE_VERSES = {
 CATEGORIES = list(BIBLE_VERSES.keys())
 
 # -----------------------
-# Initialization Functions
+# Cookie Data Initialization Functions
 # -----------------------
-def init_data_files():
-    """Create the data directory and JSON files if they do not exist."""
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
-    
-    if not os.path.exists(TRACKING_FILE):
-        with open(TRACKING_FILE, "w") as f:
-            json.dump({"entries": []}, f, indent=4)
-    
-    if not os.path.exists(CONFIG_FILE):
+def init_data_cookies():
+    """Initialize cookies for tracking data and config if they don't exist."""
+    if TRACKING_KEY not in cookies:
+        cookies[TRACKING_KEY] = json.dumps({"entries": []})
+    if CONFIG_KEY not in cookies:
         default_config = {
             "goals": {
                 "Love & Service": "Serve at least 5 people weekly",
@@ -54,28 +57,32 @@ def init_data_files():
                 "enable_notifications": True
             }
         }
-        with open(CONFIG_FILE, "w") as f:
-            json.dump(default_config, f, indent=4)
+        cookies[CONFIG_KEY] = json.dumps(default_config)
+    cookies.save()
 
 def load_data():
-    """Load tracking data from the JSON file."""
-    with open(TRACKING_FILE, "r") as f:
-        return json.load(f)
+    """Load tracking data from cookies."""
+    data_str = cookies.get(TRACKING_KEY)
+    if data_str is None:
+        return {"entries": []}
+    return json.loads(data_str)
 
 def save_data(data):
-    """Save tracking data to the JSON file."""
-    with open(TRACKING_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+    """Save tracking data to cookies."""
+    cookies[TRACKING_KEY] = json.dumps(data)
+    cookies.save()
 
 def load_config():
-    """Load configuration data from the JSON file."""
-    with open(CONFIG_FILE, "r") as f:
-        return json.load(f)
+    """Load configuration data from cookies."""
+    config_str = cookies.get(CONFIG_KEY)
+    if config_str is None:
+        return {}
+    return json.loads(config_str)
 
 def save_config(config):
-    """Save configuration data to the JSON file."""
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(config, f, indent=4)
+    """Save configuration data to cookies."""
+    cookies[CONFIG_KEY] = json.dumps(config)
+    cookies.save()
 
 # -----------------------
 # App Page Functions
@@ -253,5 +260,5 @@ def main():
         st.error("Invalid choice. Please select a valid option from the sidebar.")
 
 if __name__ == "__main__":
-    init_data_files()
+    init_data_cookies()
     main()
