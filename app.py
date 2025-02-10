@@ -2,6 +2,8 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
+import pandas as pd
+import altair as alt
 
 # -----------------------
 # File Paths and Constants
@@ -112,7 +114,7 @@ def render_log_entry():
     with st.form(key="entry_form"):
         # Automatically use the current date (can be overridden if needed)
         entry_date = st.date_input("Date", datetime.today())
-        # Metric input (number of acts, hours, etc.) - you may customize the label per category
+        # Metric input (number of acts, hours, etc.)
         value = st.number_input("Metric Value (e.g., number of acts, hours, etc.)", min_value=0, step=1)
         reflection = st.text_area("Reflection/Notes")
         submit_button = st.form_submit_button(label="Submit Entry")
@@ -170,12 +172,71 @@ def render_settings():
     
     st.info("Settings are currently read-only in this version.")
 
+def render_reports():
+    st.title("Reports & Visualizations")
+    st.write("Visualize your spiritual journey over time.")
+
+    data = load_data()
+    entries = data.get("entries", [])
+    if not entries:
+        st.info("No entries logged yet. Please log some entries to see visualizations.")
+        return
+    
+    # Convert entries to a pandas DataFrame
+    df = pd.DataFrame(entries)
+    
+    # Convert 'date' column to datetime
+    df['date'] = pd.to_datetime(df['date'])
+    
+    # Allow the user to choose the time aggregation and category filter
+    aggregation = st.selectbox("Select Time Aggregation", ["Weekly", "Monthly", "Yearly"])
+    filter_category = st.selectbox("Filter by Category", ["All"] + CATEGORIES)
+    
+    # Create a "Period" column based on the selected aggregation
+    if aggregation == "Weekly":
+        df['Period'] = df['date'].dt.strftime('%Y-W%U')
+    elif aggregation == "Monthly":
+        df['Period'] = df['date'].dt.strftime('%Y-%m')
+    elif aggregation == "Yearly":
+        df['Period'] = df['date'].dt.strftime('%Y')
+    
+    # Filter by category if needed
+    if filter_category != "All":
+        df = df[df['category'] == filter_category]
+    
+    if df.empty:
+        st.info("No data available for the selected filters.")
+        return
+
+    # Group the data. If all categories are selected, group by both Period and category.
+    if filter_category == "All":
+        agg_df = df.groupby(['Period', 'category'])['metric'].sum().reset_index()
+        chart = alt.Chart(agg_df).mark_line(point=True).encode(
+            x=alt.X('Period:N', sort=None, title="Period"),
+            y=alt.Y('metric:Q', title="Total Metric"),
+            color=alt.Color('category:N', title="Category"),
+            tooltip=['Period', 'category', 'metric']
+        ).properties(
+            title=f"Metrics by {aggregation} Period and Category"
+        )
+    else:
+        agg_df = df.groupby('Period')['metric'].sum().reset_index()
+        chart = alt.Chart(agg_df).mark_line(point=True).encode(
+            x=alt.X('Period:N', sort=None, title="Period"),
+            y=alt.Y('metric:Q', title="Total Metric"),
+            tooltip=['Period', 'metric']
+        ).properties(
+            title=f"Metrics by {aggregation} Period"
+        )
+    
+    st.altair_chart(chart, use_container_width=True)
+
 # -----------------------
 # Main App
 # -----------------------
 def main():
     st.sidebar.title("Christian Personal Data Tracker")
-    menu_options = ["Dashboard", "Log Entry", "View Entries", "Settings"]
+    menu_options = ["Dashboard", "Log Entry", "View Entries", "Reports", "Settings"]
     choice = st.sidebar.radio("Navigation", menu_options)
     
     if choice == "Dashboard":
@@ -184,6 +245,8 @@ def main():
         render_log_entry()
     elif choice == "View Entries":
         render_view_entries()
+    elif choice == "Reports":
+        render_reports()
     elif choice == "Settings":
         render_settings()
     else:
