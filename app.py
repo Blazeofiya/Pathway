@@ -35,28 +35,43 @@ BIBLE_VERSES = {
 CATEGORIES = list(BIBLE_VERSES.keys())
 
 # -----------------------
+# Helper Function to Load config.json
+# -----------------------
+def load_config_file():
+    """Load configuration data from the config.json file."""
+    with open("config.json", "r") as f:
+        return json.load(f)
+
+# -----------------------
 # Cookie Data Initialization Functions
 # -----------------------
 def init_data_cookies():
     """Initialize cookies for tracking data and config if they don't exist."""
+    # Initialize tracking data cookie if not present
     if TRACKING_KEY not in cookies:
         cookies[TRACKING_KEY] = json.dumps({"entries": []})
+    
+    # Initialize configuration cookie by loading config.json, if available
     if CONFIG_KEY not in cookies:
-        default_config = {
-            "goals": {
-                "Love & Service": "Serve at least 5 people weekly",
-                "Evangelism & Discipleship": "Share the Gospel or mentor 3 people weekly",
-                "Faithfulness in Trials": "Journal one instance per trial of trust in God",
-                "Generosity & Giving": "Give 10% of income/time to ministry",
-                "Holiness & Obedience": "Engage in daily Bible study and prayer",
-                "Use of Talents for God's Glory": "Identify and use your talents weekly for ministry",
-                "Heart & Motivation Check": "Complete a monthly questionnaire on your intentions"
-            },
-            "notification_settings": {
-                "daily_reminder_time": "08:00",
-                "enable_notifications": True
+        try:
+            default_config = load_config_file()
+        except Exception as e:
+            st.error("Error loading config.json. Using fallback configuration.")
+            default_config = {
+                "goals": {
+                    "Love & Service": "Serve at least 5 people weekly",
+                    "Evangelism & Discipleship": "Share the Gospel or mentor 3 people weekly",
+                    "Faithfulness in Trials": "Journal one instance per trial of trust in God",
+                    "Generosity & Giving": "Give 10% of income/time to ministry",
+                    "Holiness & Obedience": "Engage in daily Bible study and prayer",
+                    "Use of Talents for God's Glory": "Identify and use your talents weekly for ministry",
+                    "Heart & Motivation Check": "Complete a monthly questionnaire on your intentions"
+                },
+                "notification_settings": {
+                    "daily_reminder_time": "08:00",
+                    "enable_notifications": True
+                }
             }
-        }
         cookies[CONFIG_KEY] = json.dumps(default_config)
     cookies.save()
 
@@ -107,7 +122,7 @@ def render_log_entry():
     # Let user choose a category
     category = st.selectbox("Select a Category", CATEGORIES)
     
-    # Load default config and get the goal for this category
+    # Load config from cookies and get the goal for this category
     config = load_config()
     goal = config.get("goals", {}).get(category, "No goal defined.")
     bible_verse = BIBLE_VERSES.get(category, "")
