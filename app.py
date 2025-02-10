@@ -59,13 +59,13 @@ def init_data_cookies():
             st.error("Error loading config.json. Using fallback configuration.")
             default_config = {
                 "goals": {
-                    "Love & Service": "Serve at least 5 people weekly",
-                    "Evangelism & Discipleship": "Share the Gospel or mentor 3 people weekly",
-                    "Faithfulness in Trials": "Journal one instance per trial of trust in God",
-                    "Generosity & Giving": "Give 10% of income/time to ministry",
-                    "Holiness & Obedience": "Engage in daily Bible study and prayer",
-                    "Use of Talents for God's Glory": "Identify and use your talents weekly for ministry",
-                    "Heart & Motivation Check": "Complete a monthly questionnaire on your intentions"
+                    "Love & Service": "Served and supported X people weekly through volunteering, helping the needy, or simply offering encouragement. Reflect on how these actions mirror Christ’s love.",
+                    "Evangelism & Discipleship": "Engaged in X gospel-sharing moments weekly or dedicate X hours to mentoring others. Periodically review how your efforts are making disciples and spreading the message.",
+                    "Faithfulness in Trials": "Journal X instances where you relied on God during difficult times. Reflect on what each experience taught you about perseverance and faith.",
+                    "Generosity & Giving": "Track the percentage of your income or time given to ministry or helping others. Record X instances of intentional generosity, noting the impact of each act.",
+                    "Holiness & Obedience": "Set daily reminders to engage in prayer and Bible study. Log your participation—such as reading a verse, meditating on it, or noting a takeaway—and reflect on your spiritual growth.",
+                    "Use of Talents for God's Glory": "Identify and record ways you use your unique gifts (music, business skills, art, etc.) to make a positive impact for God’s kingdom, both in everyday tasks and larger projects.",
+                    "Heart & Motivation Check": "Complete a monthly SWOT analysis that examines your motivations—ensuring you serve for God’s glory rather than for human praise—and reflect on areas for improvement."
                 },
                 "notification_settings": {
                     "daily_reminder_time": "08:00",
